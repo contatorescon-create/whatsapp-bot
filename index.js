@@ -1,13 +1,29 @@
 const { default: makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys')
-const qrcode = require('qrcode-terminal')
+const QRCode = require('qrcode')
 const pino = require('pino')
+const http = require('http')
+
+let currentQR = null
+
+const server = http.createServer(async (req, res) => {
+    if (req.url === '/qr' && currentQR) {
+        const qrImage = await QRCode.toDataURL(currentQR)
+        res.writeHead(200, { 'Content-Type': 'text/html' })
+        res.end(`<html><body style="background:#000;display:flex;justify-content:center;align-items:center;height:100vh"><img src="${qrImage}" style="width:300px"/></body></html>`)
+    } else {
+        res.writeHead(200, { 'Content-Type': 'text/plain' })
+        res.end('Aguardando QR Code...')
+    }
+})
+
+server.listen(process.env.PORT || 3000)
 
 async function connectToWhatsApp() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info')
     
     const sock = makeWASocket({
         auth: state,
-        printQRInTerminal: true,
+        printQRInTerminal: false,
         logger: pino({ level: 'silent' })
     })
 
@@ -15,17 +31,16 @@ async function connectToWhatsApp() {
         const { connection, lastDisconnect, qr } = update
         
         if (qr) {
-            console.log('QR Code gerado! Escaneie com o WhatsApp:')
-            qrcode.generate(qr, { small: true })
+            currentQR = qr
+            console.log('QR Code disponível em /qr')
         }
         
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
-            if (shouldReconnect) {
-                connectToWhatsApp()
-            }
+            if (shouldReconnect) connectToWhatsApp()
         } else if (connection === 'open') {
-            console.log('WhatsApp conectado com sucesso!')
+            currentQR = null
+            console.log('WhatsApp conectado!')
         }
     })
 
@@ -35,8 +50,6 @@ async function connectToWhatsApp() {
         const msg = messages[0]
         if (!msg.key.fromMe && msg.message) {
             const text = msg.message.conversation || msg.message.extendedTextMessage?.text || ''
-            console.log('Mensagem recebida:', text)
-            
             if (text.toLowerCase() === 'oi') {
                 await sock.sendMessage(msg.key.remoteJid, { text: 'Olá! Sou um bot automático 🤖' })
             }
