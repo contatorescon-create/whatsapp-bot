@@ -7,8 +7,7 @@
   },
   "dependencies": {
     "@whiskeysockets/baileys": "latest",
-    "qrcode-terminal": "latest",
+    "qrcode": "latest",
     "pino": "latest"
-    "qrcode": "latest"
   }
 }
