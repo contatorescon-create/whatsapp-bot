@@ -1,0 +1,32 @@
+# Fly.io — bot WhatsApp do ResconFi em São Paulo. A sessão do WhatsApp fica no volume /data.
+app = "resconfi-whatsapp"
+primary_region = "gru"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "3000"
+  AUTH_DIR = "/data/auth_info"
+
+[mounts]
+  source = "wa_sessao"
+  destination = "/data"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "off"     # sempre ligado: a conexão com o WhatsApp precisa ficar aberta
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    method = "GET"
+    path = "/"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

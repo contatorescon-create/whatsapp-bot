@@ -1,13 +1,17 @@
 {
   "name": "whatsapp-bot",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "main": "index.js",
+  "private": true,
   "scripts": {
     "start": "node index.js"
   },
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
-    "@whiskeysockets/baileys": "latest",
-    "qrcode": "latest",
-    "pino": "latest"
+    "@whiskeysockets/baileys": "6.7.24",
+    "pino": "10.4.0",
+    "qrcode": "1.5.4"
   }
 }
